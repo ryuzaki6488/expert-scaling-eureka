@@ -45,6 +45,7 @@
 
 	var timer = new Timer(),
 		coinLink = "",
+		connectedUsersCount = 0,
 		socket = io.connect('http://10.20.86.32:3000');
 	
 	socket.on('currentEndTime', function (data) {
@@ -67,6 +68,11 @@
 		$('#coinLink').hide();
 		$('#timer').show();
 		$('#coinLink').html("");
+	});
+
+	socket.on('connectedUsersCount', function(data){
+		connectedUsersCount = "User Count: " + data.connectedUsersCount.toString();
+		$('#connectedUsers').html(connectedUsersCount);
 	});
 
 	setInterval(function() {

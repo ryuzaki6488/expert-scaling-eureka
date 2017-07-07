@@ -55,6 +55,13 @@ body {
 	padding: 2px;
 }
 
+#connectedUsers{
+	font: 20px "Lucida Grande", Helvetica, Arial, sans-serif;
+	margin: 0 auto;
+	color: #FFFFFF;
+	text-align: left;
+	padding: 2px;
+}
 .time {
 	-moz-box-shadow:inset 0px 1px 0px 0px #caefab;
 	-webkit-box-shadow:inset 0px 1px 0px 0px #caefab;

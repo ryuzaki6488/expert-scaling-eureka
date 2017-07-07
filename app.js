@@ -41,30 +41,51 @@ server.listen(app.get('port'), function(){
   console.log('Express server listening on port ' + app.get('port'));
 });
 
-timer.initializeCountdown();
+var counterIsBeingReset = 0;
+var counterPollTime = 1000; //Time (in ms) interval in which server emits counter time to connected clients
+var countdownTime = 120000; //Countdown Time in ms
+var counterPauseDurationOnReset = 30000; //Pause the counter for this time, after revealing the link
+var connectedUsersPollTime = 3000; //Time in ms to wait before emitting connected user count to all connected clients
+
+timer.initializeCountdown(countdownTime);
+timer.setSelectedCoin();
 
 io.sockets.on('connection', function(socket) {
-	setInterval(function(){
+
+  setInterval(function(){
 		var timeLeft = timer.getEndTime();
-		if(timeLeft > 0){
-      console.log("Connected Clients: "+io.engine.clientsCount.toString());
+		if(timeLeft > 0 && !counterIsBeingReset){
       console.log("Emitting timeLeft to all connected clients: " + timeLeft.toString());
     	io.sockets.emit('currentEndTime', {timeLeft: timeLeft});
-    } else {	    	
-			coinLink = "http://bittrex.com/Market/Index?MarketName=BTC-SC"
+    }else{	    	
+			coinLink = "http://bittrex.com/Market/Index?MarketName=BTC-" + timer.getSelectedCoin();
       
       //delaying the emit event to make room for the update.
       console.log("Emitting coin to all connected clients: " + coinLink);
       sleep.msleep(250);
   		io.sockets.emit('selectedCoin', {coinLink: coinLink});
+	   }
+	}, counterPollTime);
 
-  		//wait 15 seconds before resetting the counter.
-  		sleep.sleep(3);
-  		console.log("Re-initializign Countdown ...");
-      timer.initializeCountdown();
-      console.log("Emitting counter reset request for all clients.");
-  		io.sockets.emit('resetTimer', {coinLink: "Lol"});
-	    }
-	}, 1000);
+  setInterval(function(){
+    var timeLeft = timer.getEndTime();
+    if(timeLeft <= 0 && !counterIsBeingReset){
+      counterIsBeingReset = 1;
+      setTimeout(function(){
+        console.log("Re-initializing Countdown ...");
+        timer.initializeCountdown(countdownTime);
+        timer.setSelectedCoin();
+        console.log("Emitting counter reset request for all clients.");
+        io.sockets.emit('resetTimer', {coinLink: "Lol"});
+        counterIsBeingReset = 0;
+      }, counterPauseDurationOnReset);
+    }
+  },200);
+
+  setInterval(function(){
+    io.sockets.emit('connectedUsersCount', {connectedUsersCount: io.engine.clientsCount});
+    console.log("Number of Connected Clients: "+io.engine.clientsCount.toString());
+  }, connectedUsersPollTime);
+
 });
 
